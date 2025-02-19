@@ -20,7 +20,8 @@ from django.urls import include, path
 from django.urls import path, include
 from django.contrib.auth.models import User
 from rest_framework import routers, serializers, viewsets
-
+from django.urls import path
+from polls.views import QuestionListView, VoteView
 
 # Serializers define the API representation.
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -38,8 +39,10 @@ router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 
 urlpatterns = [
+    path('api/questions/', QuestionListView.as_view(), name='question-list'),
+    path('api/questions/vote/<int:choice_id>/', VoteView.as_view(), name='vote'),
     path('', include(router.urls)),
     path("polls/", include("polls.urls")),
     path("admin/", admin.site.urls),
-    path('api-auth/', include('rest_framework.urls'))
+    path('api-auth/', include('rest_framework.urls')),
 ]

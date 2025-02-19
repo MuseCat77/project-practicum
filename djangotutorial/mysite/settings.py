@@ -25,7 +25,9 @@ SECRET_KEY = "django-insecure-6&6=9fyuw0vu0&@ldkt0hy)3#a0@*k-2rp2iiv_8yokk1zq#vh
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "*"
+    ]
 
 
 # Application definition
@@ -38,10 +40,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "rest_framework"
+    "rest_framework",
+    "corsheaders"
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -128,6 +132,18 @@ REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+        'rest_framework.permissions.AllowAny'
     ]
 }
+
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:5173",  # Vite фронтенд
+    "http://localhost:5173",
+]
+
+CSRF_TRUSTED_COOKIES = [
+    "http://127.0.0.1:5173",
+    "http://localhost:5173"
+    ]
+
+CORS_ALLOW_CREDENTIALS = True
