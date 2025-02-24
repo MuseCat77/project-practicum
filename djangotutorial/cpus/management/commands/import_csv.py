@@ -1,29 +1,72 @@
 import csv
-from datetime import datetime
+import os
 from django.core.management.base import BaseCommand
 from cpus.models import Product
+from datetime import datetime
 
 class Command(BaseCommand):
-    help = 'Import products from CSV file'
+    help = "Импортирует данные из CSV в модель Product"
 
     def handle(self, *args, **kwargs):
-        file_path = 'data/dataset.csv'  # Укажите путь к CSV
+        csv_file_path = os.path.join("data", "dataset.csv")  # Путь к файлу
 
-        with open(file_path, newline='', encoding='utf-8') as csvfile:
+        if not os.path.exists(csv_file_path):
+            self.stderr.write(self.style.ERROR(f"Файл {csv_file_path} не найден!"))
+            return
+
+        with open(csv_file_path, newline="", encoding="utf-8") as csvfile:
             reader = csv.DictReader(csvfile)
-            for row in reader:
-                # Обработка даты: если дата некорректная, ставим None
-                date_str = row['Release Date'].strip() if row['Release Date'] else None
-                try:
-                    release_date = datetime.strptime(date_str, "%Y-%m-%d") if date_str and date_str.lower() not in ["n/a", "unknown", ""] else None
-                except ValueError:
-                    release_date = None  # Если дата некорректна, ставим None
+            count = 0
 
-                # Создание объекта в базе
-                Product.objects.create(
-                    product=row['Product'],
-                    type=row['Type'],
-                    release_date=release_date
+            for row in reader:
+                # Фильтрация пустых данных
+                product_name = row.get("Product", "").strip()
+                if not product_name:
+                    continue  # Пропускаем строки без названия
+
+                # Обработка даты (если есть)
+                release_date = None
+                date_str = row.get("Release Date", "").strip()
+                if date_str and date_str.lower() not in ["n/a", "", "none"]:
+                    try:
+                        release_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                    except ValueError:
+                        self.stderr.write(self.style.WARNING(f"Некорректная дата: {date_str}"))
+
+                # Функция для обработки числовых данных (целых и дробных)
+                def parse_int(value):
+                    try:
+                        return int(value) if value.strip() and value.lower() not in ["n/a", "none", ""] else None
+                    except ValueError:
+                        return None
+
+                def parse_float(value):
+                    try:
+                        return float(value) if value.strip() and value.lower() not in ["n/a", "none", ""] else None
+                    except ValueError:
+                        return None
+
+                # Создание или обновление записи в БД
+                product, created = Product.objects.update_or_create(
+                    product=product_name,
+                    defaults={
+                        "type": row.get("Type", "").strip()[:3],
+                        "release_date": release_date,
+                        "foundry": row.get("Foundry", "").strip() or None,
+                        "vendor": row.get("Vendor", "").strip() or None,
+                        "process_size": parse_int(row.get("Process Size (nm)", "")),
+                        "tdp": parse_int(row.get("TDP (W)", "")),
+                        "die_size": parse_float(row.get("Die Size (mm^2)", "")),
+                        "transistors": parse_int(row.get("Transistors (million)", "")),
+                        "freq": parse_int(row.get("Freq (MHz)", "")),
+                        "fp16_gflops": parse_float(row.get("FP16 GFLOPS", "")),
+                        "fp32_gflops": parse_float(row.get("FP32 GFLOPS", "")),
+                        "fp64_gflops": parse_float(row.get("FP64 GFLOPS", "")),
+                    }
                 )
 
-        self.stdout.write(self.style.SUCCESS('Successfully imported products'))
+                count += 1
+                action = "Создан" if created else "Обновлён"
+                self.stdout.write(self.style.SUCCESS(f"{action}: {product.product}"))
+
+        self.stdout.write(self.style.SUCCESS(f"✅ Импорт завершён! Обработано {count} записей."))
