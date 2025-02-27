@@ -1,0 +1,33 @@
+version: '3'
+services:
+  django:
+    build: ./djangotutorial
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./djangotutorial:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  another_service:
+    build: ./another_service
+    command: npm start
+    volumes:
+      - ./another_service:/app
+    ports:
+      - "3000:3000"
+      
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
