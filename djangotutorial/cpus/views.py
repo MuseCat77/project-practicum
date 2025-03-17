@@ -1,10 +1,10 @@
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
+from rest_framework.renderers import JSONRenderer
 from cpus.models import Product
 from cpus.serializers import CpusSerializer
+from .renderers import CSVRenderer  # Импортируем CSV-рендерер
 
-# Список вопросов
-class ProductsListView(generics.ListAPIView):
+class ProductsListView(ListAPIView):
     queryset = Product.objects.all()
     serializer_class = CpusSerializer
+    renderer_classes = [JSONRenderer, CSVRenderer]  # Добавляем поддержку CSV

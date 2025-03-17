@@ -28,5 +28,7 @@ urlpatterns = [
     path("polls/", include("polls.urls")),
     path("admin/", admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
+    # JSON: http://127.0.0.1:8000/api/cpus/
+    # CSV: http://127.0.0.1:8000/api/cpus/?format=csv
     path('api/cpus/', ProductsListView.as_view(), name='cpus')
 ]
